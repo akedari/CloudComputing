@@ -1,0 +1,366 @@
+
+//SharedMemory.java
+
+import java.io.File;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+//This class is main class calling splitting of files and merging of files class methods.
+
+public class SharedMemory extends Thread {
+
+	/**
+	 * @param args
+	 * @throws InterruptedException 
+	 */
+	
+	static // Configuration part
+			int i;
+			static long inputFileSize;// = 1000;	// 1GB or 1TB
+			static long chunkSize; // = 100;			// 10MB or 1GB
+			static long numberOfFilestoCreate; //=inputFileSize/chunkSize;
+	
+	public static void main(String[] args) throws InterruptedException {
+
+		long startTime,endtime;
+		startTime = 0;
+		endtime = 0;
+		startTime = System.currentTimeMillis();
+		
+		File inputfile= new File("input");
+		long totalBytes= inputfile.length();
+
+		int chunk=100;
+
+		//10   000 00 000   = 1GB
+		inputFileSize = (totalBytes)/1000000;	// 1000MB
+		chunkSize = inputFileSize/1000;						//10MB chunk
+		numberOfFilestoCreate = inputFileSize/chunkSize;	// 10 files
+		
+		long totalline = (int) (totalBytes/chunk);
+		long linePerFile = (totalline / numberOfFilestoCreate);
+		
+		//Diving files in to small pieces
+		divideFilesintoChunks(linePerFile);
+		
+		//MergeFiles function;
+		mergeFileChunks();
+		
+		
+		endtime = System.currentTimeMillis();
+		double totaltime1 = (endtime - startTime);
+		System.out.println("\n\n\nTotal Time=    " + totaltime1 +" milliseconds");
+		double totaltime=totaltime1/1000;
+		System.out.println("Total Time=    " + totaltime +" seconds");
+	}
+
+//***********************************************************************************************************************************************************
+	
+	// This method is designed for merging of files , this method will get total number of files in specified folder.
+	// Then till all the files get completely process it will put lock on folder.
+	//Using ExecutorService we have limited number of threads concurrent execution
+	
+	private static void mergeFileChunks() {
+		// TODO Auto-generated method stub
+		int j,threadCount=1;
+		int name=0;
+		File folder= new File("./output/");
+		
+		while(true)
+		{
+			File[] files= folder.listFiles();
+			if(files.length==1)
+			{
+				break;
+			}
+			
+			int numberofthreads =  files.length;
+			ExecutorService pool = Executors.newFixedThreadPool(threadCount);
+			
+			// If we have even number of files in specified folder location
+			if(numberofthreads%2==0)
+			{
+				for(i=0; i<numberofthreads; )
+				{
+					j=i+1;
+					Runnable worker = new MergeFiles(files[i].getName(),files[j].getName(),name++);
+					pool.execute(worker);
+					i=i+2;
+				}				
+			}
+			
+			// If we have odd number of files in specified folder location
+			else
+			{
+				for(i=0; i<numberofthreads-1; )
+				{
+					j=i+1;
+					Runnable worker = new MergeFiles(files[i].getName(),files[j].getName(),name++);
+					pool.execute(worker);
+					i=i+2;
+				}
+			}
+			
+			pool.shutdown();
+			while (!pool.isTerminated()) 
+			{
+	        }
+		}
+	}
+
+//*******************************************************************************************************************************************************
+	
+	// This method is designed for splitting the files in small chunks, we are creating 10 MB size files for all operations
+	//Using ExecutorService we have limited number of threads concurrent execution
+	
+	private static void divideFilesintoChunks(long linePerFile) {
+		// TODO Auto-generated method stub
+		ExecutorService pool1 = Executors.newFixedThreadPool(1);
+		System.out.println("numberOfFilestoCreate: "+ numberOfFilestoCreate);
+		for (i = 0; i < numberOfFilestoCreate; i++) 
+		{
+			Runnable worker1 = new SortFiles(i,linePerFile);
+			pool1.execute(worker1);
+		}
+		
+		pool1.shutdown();
+		while (!pool1.isTerminated()) 
+		{
+        }
+	}
+
+}
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SortFiles.java
+
+import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.Map;
+import java.util.TreeMap;
+
+//This class is designed for creating small chunks of files
+
+public class SortFiles extends Thread{
+	
+	public int filename;
+	String inputfileName = "input";
+	long linePerFiles;
+	Map<String, String> map;
+	 
+	//Assign file name ,lines per file.
+	public SortFiles(int i,long linePerFile) 
+	{
+		this.filename=i;
+		this.linePerFiles=linePerFile;
+		map=new TreeMap<String, String>();
+	}
+	
+	
+	// we are reading file in small chunk size then we are writing back to disk in chunk size
+	//This will reduce the number of IO Operations and process will speed up
+	public void run()
+	{
+        File output = new File("./output/"+filename);
+        int offset =0;
+        int len = (int)linePerFiles;
+        
+        int fizesize = len*100;
+        byte[] buffer = new byte[fizesize] ;
+        StringBuffer stringBuffer = new StringBuffer();
+        
+        RandomAccessFile fileStore;
+		try {
+			fileStore = new RandomAccessFile(inputfileName, "rw");
+			BufferedWriter bwr = new BufferedWriter(new FileWriter(output));
+			
+			//reading from required position to allow multiple thread work simultaneously
+			long position  = linePerFiles*filename*100;
+			fileStore.seek(position);
+			
+			// reading String from RandomAccessFile
+            fileStore.read(buffer,offset,fizesize);
+            
+            byte[] bytesarray = new byte[100];
+            int newOffset=0;
+            ByteArrayInputStream in = new ByteArrayInputStream(buffer);
+            
+            for (int i = 0; i < linePerFiles; i++) 
+            {				
+            	in.read(bytesarray, newOffset, 100);
+            	String line = new String(bytesarray);
+            	map.put(line.substring(0, 10),line.substring(10));
+			}
+            
+            for(String key 	: map.keySet())
+            {
+            	String value =  map.get(key);
+           		stringBuffer.append(key+value);
+            }
+            
+            bwr.write(stringBuffer.toString());
+            bwr.flush();
+            bwr.close();
+		} 
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+        
+	}
+
+}
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+MergeFiles.java
+
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Scanner;
+
+// This class is designed for merging of small files and sort them while merging them
+public class MergeFiles extends Thread{
+
+	String name1;
+	String name2;
+	int outputname;
+	
+	//Assign the new name to file which we are going to create, and assign input file names to variable
+	public MergeFiles(String name1, String name2, int outputname) 
+	{
+		this.name1=name1;
+		this.name2=name2;
+		this.outputname=outputname;
+	}
+
+
+	public void run()
+	{
+		File file1 = new File("./output/"+name1);
+		File file2 = new File("./output/"+name2);
+		PrintWriter printer = null;
+		
+        File output = new File("./output/"+ "output"+outputname);
+        try 
+        {
+			printer = new PrintWriter(output);
+		} 
+        catch (FileNotFoundException e1) 
+        {
+			e1.printStackTrace();
+		}
+        
+        Scanner sc1,sc2;
+        String line1 = null;
+        String line2 = null;
+        
+        boolean flag1=false;
+        boolean flag2=false;
+        
+		try 
+		{
+			sc1 = new Scanner(file1);
+			sc2 = new Scanner(file2);
+			
+			if(file1.length() ==0)
+			{
+				line1 = sc2.nextLine();
+				printer.write(line2+"\r\n");
+			}
+			
+			else if(file2.length()==0)
+			{
+				line2 = sc1.nextLine();
+				printer.write(line1+"\r\n");
+			}
+			
+			else {
+
+				line1 = sc1.nextLine();
+				line2 = sc2.nextLine();
+//scanning both the files to read and sort them accordingly
+				while (sc1 != null && sc2 != null) {
+
+					String key1 = line1.substring(0, 11);
+					String Key2 = line2.substring(0, 11);
+
+					int result = key1.compareTo(Key2);
+
+					if (result < 0) 
+					{
+						printer.write(line1 + "\r\n");
+						if(sc1.hasNext())
+							line1 = sc1.nextLine();
+						else
+						{	flag1=true;
+							break;
+						}
+					}
+					
+					else 
+					{
+						printer.write(line2 + "\r\n");
+						if(sc2.hasNext())
+							line2 = sc2.nextLine();
+						else
+						{
+							flag2=true;
+							break;
+						}
+					}
+				}
+// Writing down remaining contents of file
+				if (flag1==true) {
+					printer.write(line2 + "\r\n");
+					while(sc2.hasNext())
+					{
+						line2=sc2.nextLine();
+						printer.write(line2 + "\r\n");
+					}
+				}
+// Writing down remaining contents of file				
+				if(flag2==true){
+					printer.write(line1 + "\r\n");
+					while(sc1.hasNext())
+					{
+						line1=sc1.nextLine();
+						printer.write(line1 + "\r\n");
+					}
+				}
+			}
+			printer.flush();
+		}
+		
+		catch (FileNotFoundException e) 
+		{
+			e.printStackTrace();
+		}
+		
+		// This will remove the files we have merged to avoid next batch to ignore the already merged files.
+		finally
+		{
+			try 
+			{
+				Path path= Paths.get("./output/"+name1);
+				Files.delete(path);
+				
+				Path path2= Paths.get("./output/"+name2);
+				Files.delete(path2);
+			} 
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+		}
+	}
+}
+

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+<property>
+<name>fs.default.name</name>
+<value>hdfs://ec2-54-172-180-220.compute-1.amazonaws.com:9000</value>
+</property>
+
+<property>
+<name>hadoop.tmp.dir</name>
+<value>/data</value>
+<description>base location for other hdfs directories.</description>
+</property>
+
+</configuration>
+

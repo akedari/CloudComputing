@@ -1,0 +1,69 @@
+
+Step 0:
+
+chmod 400 abhijeetkedari.pem
+ssh-add abhijeetkedari.pem
+ssh ubuntu@54.172.236.250
+
+
+step1:
+
+sudo apt-get  update -y
+sudo apt-get install gcc -y
+sudo apt-get update -y
+sudo apt-get install openjdk-7-jdk -y
+sudo apt-get install ant
+
+step2:
+//navigate to the location where we have abhijeetkedari.pem
+cd /home/abhijeet/Downloads/CS553/Assignment2
+
+// Copy code to d2.xlarge
+scp -i abhijeetkedari.pem /home/abhijeet/Downloads/CS553/Assignment2/gensort-linux-1.5.tar.gz ubuntu@IP_Address:/home/ubuntu
+
+step3:
+//copy gensort to d2.xlarge
+scp -i abhijeetkedari.pem /home/abhijeet/Downloads/CS553/Assignment2/SharedMemoryCode.tar.gz ubuntu@IP_Address:/home/ubuntu
+
+
+step4:
+// extract code
+tar -xzvf gensort-linux-1.5.tar.gz
+tar -xzvf SharedMemoryCode.tar.gz
+
+
+step 5:
+// to generate the file using gensort
+cd /home/ubuntu/gensort-linux-1.5/64
+./gensort -a 1000000 input
+
+
+step 6:
+//Move input file to Source location 
+cp /home/ubuntu/gensort-linux-1.5/64/input /home/ubuntu/SharedMemoryCode
+
+
+step 6:
+//to run code - navigate to the directory where you have buid.xml saved
+
+cd /home/ubuntu/SharedMemoryCode
+ant
+
+
+
+
+//Experiment 1 GB
+
+10 MB file size with - 
+divideFilesintoChunks - newFixedThreadPool(4)
+mergeFileChunks - newFixedThreadPool(8)
+Time - 2 Min 40 sec
+
+100 MB file size with - 
+divideFilesintoChunks - newFixedThreadPool(4)
+mergeFileChunks - newFixedThreadPool(8)
+Time - 132
+
+
+
+

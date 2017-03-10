@@ -1,0 +1,74 @@
+
+
+On Local:
+
+wget www-eu.apache.org/dist/spark/spark-1.6.0/spark-1.6.0-bin-hadoop2.6.tgz
+tar -xzvf spark-1.6.0-bin-hadoop2.6.tgz
+cd spark-1.6.0-bin-hadoop2.6
+cd ec2
+
+export AWS_ACCESS_KEY_ID=XXXXXXXXXXXXXXXXXXXXXXXXX
+export AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXXXXXXXXXXX
+
+
+Initialise the 16 nodes
+./spark-ec2 -k abhijeetkedari -i /home/abhijeet/Downloads/CS553/Assignment2/Spark/abhijeetkedari.pem -s 16 -t c3.large --spot-price=0.03 launch spark_instance
+
+	
+Login to master
+./spark-ec2 -k abhijeetkedari -i /home/abhijeet/Downloads/CS553/Assignment2/Spark/abhijeetkedari.pem login spark_instance
+
+
+
+scp -i abhijeetkedari.pem /home/abhijeet/Downloads/CS553/Assignment2/Spark/valsort root@52.90.43.162:/root
+scp -i abhijeetkedari.pem /home/abhijeet/Downloads/CS553/Assignment2/Spark/gensort root@52.90.43.162:/root
+scp -i abhijeetkedari.pem /home/abhijeet/Downloads/CS553/Assignment2/Spark/abhijeetspark.scala root@52.90.43.162:/root
+
+
+sudo mkfs.ext4 /dev/xvdp
+sudo mke2fs -F  -t  ext4 /dev/xvdp
+sudo mkdir /data
+sudo mount /dev/xvdp /data
+sudo chmod 777 /data
+
+
+genrate file
+
+./gensort -a 100000000 /data/input
+
+
+
+cd /root/ephemeral-hdfs
+bin/hadoop fs -mkdir /abhijeet
+
+//use below command instead of copyFromLocal @/root/ephemeral-hdfs/bin::::
+./hadoop fs -Ddfs.replication=1 -put /data/input /abhijeet
+
+// to check wheather file is transfering or not
+bin/hadoop dfs -ls /abhijeet/
+
+
+
+cd spark
+cd bin
+
+./spark-shell -i /root/abhijeetspark.scala
+
+
+// now do validation
+bin/hadoop dfs -getmerge /abhijeet/output /data/output
+
+cd /root
+./valsort /data/part-r-00000
+
+cd /data/
+head -10 part-r-00000 >>/data/head10
+tail -10 part-r-00000 >>/data/tail10
+
+
+
+
+
+
+
+

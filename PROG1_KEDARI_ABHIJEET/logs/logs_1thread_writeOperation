@@ -1,0 +1,21 @@
+---------------------1 thread----------------------------------------
+WriteSeqByte: 3036.000000
+Latency: time per operation 30.360000  
+Throughput: operations(mb) per seconds 32.938076  
+WriteSeqKByte: 88.000000
+Latency: time per operation 0.859375  
+Throughput: operations[mb] per seconds 1163.636364  
+WriteSeqMByte: 53.000000
+Latency: time per operation 0.505447  
+Throughput: operations(mb) per seconds 1978.445283  
+	WriteRandByte: 118097.000000
+	Latency: time per operation 1180.970000  
+	Throughput: operations per milliseconds 0.846762  
+	WriteRandKByte: 179.000000
+	Latency: time per operation 1.748047  
+	Throughput: operations per milliseconds 572.067039  
+	WriteRandMByte: 53.000000
+	Latency: time per operation 0.505447  
+	Throughput: operations per milliseconds 1978.445283 
+
+---------------------2 thread----------------------------------------

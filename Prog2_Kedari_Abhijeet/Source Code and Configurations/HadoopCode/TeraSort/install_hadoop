@@ -1,0 +1,66 @@
+step1:
+sudo wget http://apache.mirrors.pair.com/hadoop/common/stable2/hadoop-2.7.2.tar.gz
+
+step2:
+tar -xzvf hadoop-2.7.2.tar.gz
+
+step3:
+chmod 777 hadoop-2.7.2
+
+step4:
+sudo apt-get install ssh
+
+step5:
+copy your pem file to master
+eval "$(ssh-agent)"
+chmod 400 abhijeetkedari.pem
+ssh-add abhijeetkedari.pem
+
+step6:
+sudo apt-get  update -y
+sudo apt-get install gcc -y
+sudo apt-get update -y
+sudo apt-get install openjdk-7-jdk -y
+
+step7:
+change core-site.xml, hadoop-env.sh, hdfs-site.xml, yarn-site.xml and mapred-site.xml in hadoop-2.7.2/etc/hadoop/ folder.
+before changing mapred rename mapred-site.xml.template to mapred-site.xml.
+
+
+step8:
+create image of master and launch slave instances
+
+
+scp -i abhijeetkedari.pem /home/abhijeet/Downloads/CS553/Assignment2/gensort-linux-1.5.zip ubuntu@52.90.251.84:/home/ubuntu
+
+scp -i abhijeetkedari.pem /home/abhijeet/Downloads/CS553/Assignment2/HadoopCode/TeraSort/build/jar/TeraSortJob.jar ubuntu@52.90.251.84:/home/ubuntu
+
+
+step9:
+edit slaves and /etc/hosts file in master and slaves
+
+master:   slaves : public dns of master and all the slaves
+	  hosts  : private_ip and public_dns of master and all the slaves
+
+slaves:   slaves : public dns of master and that slave
+	  hosts  : private_ip and public_dns of master and that slave		//use sudo vi /etc/hosts
+
+		example : 172.31.15.249 ec2-52-90-251-84.compute-1.amazonaws.com
+
+step10:    
+
+eval "$(ssh-agent)"
+ssh-add ashwinnew.pem
+ssh-keygen  -t rsa
+ssh-copy-id -i ~/.ssh/id_rsa.pub ubuntu@ec2-52-201-231-19.compute-1.amazonaws.com
+ssh-copy-id -i ~/.ssh/id_rsa.pub ubuntu@ec2-54-173-147-3.compute-1.amazonaws.com
+ssh-copy-id -i ~/.ssh/id_rsa.pub ubuntu@ec2-54-174-27-4.compute-1.amazonaws.com
+chmod 0600 ~/.ssh/authorized_keys
+cd hadoop-2.7.2/
+bin/hadoop namenode -format
+ssh localhost 
+exit
+cd hadoop-2.7.2/sbin
+./start-dfs.sh        
+./start-yarn.sh
+

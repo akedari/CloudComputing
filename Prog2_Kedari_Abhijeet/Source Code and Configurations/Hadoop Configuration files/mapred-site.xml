@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<configuration>
+<property>
+<name>mapreduce.job.tracker</name>
+<value>hdfs://ec2-54-172-180-220.compute-1.amazonaws.com:9001</value>
+</property><property>
+<name>mapreduce.framework.name</name>
+<value>yarn</value></property>
+</property>
+<property>
+  <name>mapreduce.tasktracker.map.tasks.maximum</name>
+  <value>8</value>
+  <description>maximum number of mapper: task tracker</description>
+</property>
+
+<property>
+  <name>mapreduce.tasktracker.reduce.tasks.maximum</name>
+  <value>8</value>
+  <description>maximum number of reduce: task tracker </description>
+</property>
+
+
+</configuration>
+
+

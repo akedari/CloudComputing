@@ -1,0 +1,51 @@
+-----------------------------------1 threads-------------------------------------------------------
+
+ReadWriteSeqByte operation 497.000000  milliseconds
+Latency: time per operation 4.970000  
+Throughput: operations(mb) per seconds 201.207243  
+
+ReadWriteSeqKByte operation 24.000000  milliseconds
+Latency: time per operation 0.234375  
+Throughput: operations(mb) per seconds 4266.666667  
+
+ReadWriteSeqMByte operation 15.000000  milliseconds
+Latency: time per operation 0.143051  
+Throughput: operations(mb) per seconds 6990.506667  
+
+ReadWriteRanByte operation 11468.000000  milliseconds
+Latency: time per operation 114.680000  
+Throughput: operations(mb) per seconds 8.719916  
+
+ReadWriteRanKByte operation 45.000000  milliseconds
+Latency: time per operation 0.439453  
+Throughput: operations(mb) per seconds 2275.555556  
+
+ReadWriteRanMByte operation 13.000000  milliseconds
+Latency: time per operation 0.123978  
+Throughput: operations(mb) per seconds 8065.969231  
+
+-----------------------------------2 threads-------------------------------------------------------
+
+ReadWriteSeqByte operation 980.000000  milliseconds
+Latency: time per operation 4.900000  
+Throughput: operations(mb) per seconds 204.081633  
+
+ReadWriteSeqKByte operation 42.000000  milliseconds
+Latency: time per operation 0.205078  
+Throughput: operations(mb) per seconds 4876.190476  
+
+ReadWriteSeqMByte operation 27.000000  milliseconds
+Latency: time per operation 0.128746  
+Throughput: operations(mb) per seconds 7767.229630  
+
+ReadWriteRanByte operation 24255.000000  milliseconds
+Latency: time per operation 121.275000  
+Throughput: operations(mb) per seconds 8.245723  
+
+ReadWriteRanKByte operation 94.000000  milliseconds
+Latency: time per operation 0.458984  
+Throughput: operations(mb) per seconds 2178.723404  
+
+ReadWriteRanMByte operation 28.000000  milliseconds
+Latency: time per operation 0.133514  
+Throughput: operations(mb) per seconds 7489.828571  

@@ -1,0 +1,29 @@
+<?xml version ="1.0" encoding="UTF-8"?>
+<project default="run" name="SharedMemory">
+    <target name="clean">
+        <delete dir="build"/>
+    	<delete dir="output"/>
+    </target>
+	<target name="precompile" depends="clean">
+	        <mkdir dir="output"/>
+	</target>
+    <target name="compile" depends="precompile">
+        <mkdir dir="build/classes"/>
+        <javac srcdir="src" destdir="build/classes"/>
+    </target>
+
+    <target name="jar" depends="compile">
+        <mkdir dir="build/jar"/>
+        <jar destfile="build/jar/SharedMemory.jar" basedir="build/classes">
+            <manifest>
+                <attribute name="Main-Class" value="SharedMemory"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="run" depends="jar">
+        <java jar="build/jar/SharedMemory.jar" fork="true"/>
+    </target>
+
+
+</project>

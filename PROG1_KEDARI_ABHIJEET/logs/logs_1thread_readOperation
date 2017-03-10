@@ -1,0 +1,18 @@
+ReadSeqByte: 20021.000000
+Latency: time per operation 200.210000  
+Throughput: operations(mb) per seconds 4.994756  
+ReadSeqKByte: 19.000000
+Latency: time per operation 0.185547  
+Throughput: operations(mb) per seconds 5389.473684  
+ReadSeqMByte: 0.000000
+Latency: time per operation 0.000000  
+Throughput: operations(mb) per seconds inf  
+	ReadRandByte: 1562.000000
+Latency: time per operation 15.620000  
+Throughput: operations(mb) per seconds 64.020487  
+	ReadRanKByte: 2.000000
+Latency: time per operation 0.019531  
+Throughput: operations(mb) per seconds 51200.000000  
+	ReadRandByte: 0.000000
+Latency: time per operation 0.000000  
+Throughput: operations(mb) per seconds inf  

@@ -1,0 +1,18 @@
+WriteSeqByte: 6132.000000
+Latency: time per operation 30.660000  
+Throughput: operations(mb) per seconds 32.615786  
+WriteSeqKByte: 182.000000
+Latency: time per operation 0.888672  
+Throughput: operations[mb] per seconds 1125.274725  
+WriteSeqMByte: 116.000000
+Latency: time per operation 0.553131  
+Throughput: operations(mb) per seconds 1807.889655  
+	WriteRandByte: 236462.000000
+	Latency: time per operation 1182.310000  
+	Throughput: operations per milliseconds 0.845802  
+	WriteRandKByte: 361.000000
+	Latency: time per operation 1.762695  
+	Throughput: operations per milliseconds 567.313019  
+	WriteRandMByte: 115.000000
+	Latency: time per operation 0.548363  
+	Throughput: operations per milliseconds 1823.610435  

@@ -1,0 +1,23 @@
+1. Go to the folder /home/ashish/intern_workspace/TeraSort/
+
+2. Run the below command to run the file.
+	ant
+
+3. Below command to run the main class "MyTeraSortApplication" 
+
+java -cp ./build/jar/TeraSortJob.jar TeraSort input.txt ./output
+
+
+
+
+
+bin/hadoop jar TeraSortJob.jar TeraSort -D /abhijeet/input /abhijeet-output
+
+
+
+
+
+/home/ubuntu/hadoop-2.7.2/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.2.jar
+
+home
+cp TeraSortJob.jar /home/ubuntu/hadoop-2.7.2/share/hadoop/mapreduce/
