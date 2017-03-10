@@ -1,0 +1,43 @@
+<project name="CloudKonClient" default="main" basedir=".">
+	<target name="init" >
+		<tstamp />
+		<mkdir dir="bin" />
+	</target>
+	
+	<target name="compileCloudKonClient" depends="init">
+		<mkdir dir="build/classes" />
+		<javac srcdir="src" destdir="build/classes">
+			<classpath>
+				<pathelement path="lib/aws-java-sdk-1.10.71.jar" />
+				<pathelement path="lib/commons-logging-1.1.3.jar" />
+				<pathelement path="lib/jackson-databind-2.5.3.jar" />
+				<pathelement path="lib/jackson-core-2.5.3.jar" />
+				<pathelement path="lib/jackson-annotations-2.5.0.jar" />
+				<pathelement path="lib/httpclient-4.3.6.jar" />
+				<pathelement path="lib/httpcore-4.3.3.jar" />
+				<pathelement path="lib/joda-time-2.8.1.jar" />
+
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="RunClientSidejar" depends="compileCloudKonClient">
+		<mkdir dir="build/jar" />
+		<jar destfile="build/jar/ClientSide.jar" basedir="build/classes">
+			<manifest>
+				<attribute name="Main-Class" value="" />
+			</manifest>
+			<fileset dir="./bin" />
+			<zipgroupfileset dir="lib" includes="aws-java-sdk-1.10.71.jar" />
+			<zipgroupfileset dir="lib" includes="commons-logging-1.1.3.jar" />		
+			<zipgroupfileset dir="lib" includes="jackson-databind-2.5.3.jar" />
+			<zipgroupfileset dir="lib" includes="jackson-core-2.5.3.jar" />
+			<zipgroupfileset dir="lib" includes="jackson-annotations-2.5.0.jar" />
+			<zipgroupfileset dir="lib" includes="httpclient-4.3.6.jar" />
+			<zipgroupfileset dir="lib" includes="httpcore-4.3.3.jar" />
+			<zipgroupfileset dir="lib" includes="joda-time-2.8.1.jar" />
+		</jar>
+	</target>
+
+	<target name="main" depends="RunClientSidejar" />
+</project>

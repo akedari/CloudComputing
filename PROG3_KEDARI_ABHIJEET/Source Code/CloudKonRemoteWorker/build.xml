@@ -1,0 +1,44 @@
+<project name="CloudKonRemoteWorker" default="main" basedir=".">
+	<target name="init" >
+		<tstamp />
+		<mkdir dir="bin" />
+	</target>
+	
+	<target name="compileCloudKonRemote" depends="init">
+		<mkdir dir="build/classes" />
+		<javac srcdir="src" destdir="build/classes">
+			<classpath>
+				<pathelement path="lib/aws-java-sdk-1.10.73.jar" />
+				<pathelement path="lib/commons-logging-1.1.3.jar" />
+				<pathelement path="lib/jackson-databind-2.5.3.jar" />
+				<pathelement path="lib/jackson-core-2.5.3.jar" />
+				<pathelement path="lib/jackson-annotations-2.5.0.jar" />
+				<pathelement path="lib/httpclient-4.3.6.jar" />
+				<pathelement path="lib/httpcore-4.3.3.jar" />
+				<pathelement path="lib/joda-time-2.8.1.jar" />
+				<pathelement path="lib/jackson-dataformat-cbor-2.5.3.jar" />
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="RunRemoteSidejar" depends="compileCloudKonRemote">
+		<mkdir dir="build/jar" />
+		<jar destfile="build/jar/RemoteWorker.jar" basedir="build/classes">
+			<manifest>
+				<attribute name="Main-Class" value="" />
+			</manifest>
+			<fileset dir="./bin" />
+			<zipgroupfileset dir="lib" includes="aws-java-sdk-1.10.73.jar" />
+			<zipgroupfileset dir="lib" includes="commons-logging-1.1.3.jar" />		
+			<zipgroupfileset dir="lib" includes="jackson-databind-2.5.3.jar" />
+			<zipgroupfileset dir="lib" includes="jackson-core-2.5.3.jar" />
+			<zipgroupfileset dir="lib" includes="jackson-annotations-2.5.0.jar" />
+			<zipgroupfileset dir="lib" includes="httpclient-4.3.6.jar" />
+			<zipgroupfileset dir="lib" includes="httpcore-4.3.3.jar" />
+			<zipgroupfileset dir="lib" includes="joda-time-2.8.1.jar" />
+			<zipgroupfileset dir="lib" includes="jackson-dataformat-cbor-2.5.3.jar" />
+		</jar>
+	</target>
+
+	<target name="main" depends="RunRemoteSidejar" />
+</project>

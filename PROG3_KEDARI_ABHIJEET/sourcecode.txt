@@ -1,0 +1,889 @@
+//LocalWorkerCloud
+
+//LocalClient.java
+
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Queue;
+import java.util.Scanner;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+/*
+ * This class is for submitting the task to queue (in memory communication is required).
+ * Multithreading approch for creating Local workers they will access in memory queue and will
+ * perform the required task.
+*/
+public class LocalClient {
+
+	
+	static ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<>();
+	static ConcurrentLinkedQueue<String> destinationqueue = new ConcurrentLinkedQueue<>();
+	static int inputCount=0;
+	static int outputCount=0;
+	
+	
+	public static void main(String[] args) {
+		
+		Scanner scanner = new Scanner(System.in);
+		String inputArgs[] = null;
+		int i=0,taskid =0,count=0;;
+		String fileName=null,threads=null,message=null,temp=null;
+		boolean working = true;
+		BufferedReader br = null;
+		
+		// Accepting the inputs from user; this is command line tool
+		
+		//System.out.println("Local Client is running enter Client -s LOCAL -t <Number_Of_Threads> -w <Workload_File_Name>");
+		
+		//inputArgs = scanner.nextLine().split(" ");
+
+		while (i < args.length) {
+			if (args[i].equals("-t")) {
+				i = i + 1;
+				threads = args[i];
+			}
+
+			if (args[i].equals("-w")) {
+				i = i + 1;
+				fileName = args[i];
+			}
+			i++;
+		}
+		
+		// Initialized the queue with content form file
+		System.out.println("*************************Local Worker***************************");
+		System.out.println("Local worker Experiment for  Threds:"+threads);
+		long startTime,endtime;
+		startTime = 0;
+		endtime = 0;
+		startTime = System.currentTimeMillis();
+		File file = new File(fileName);
+		try {
+			br = new BufferedReader(new FileReader(file));
+			while ((message = br.readLine()) != null) {
+				temp = Integer.toString(taskid) + ":" +  message;
+				queue.add(temp);
+				taskid = taskid + 1;
+			}
+		}
+
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		int limit = Integer.parseInt(threads);
+		for(i=0;i<limit;i++)
+		{
+			LocalWorker localWorker =  new LocalWorker(queue,destinationqueue);
+			localWorker.start();
+		}
+
+		while(working)
+		{
+			if(!destinationqueue.isEmpty())
+			{
+				destinationqueue.poll();
+				count++;
+			}
+			
+			if(count==taskid)
+			{
+				working = false;
+				break;
+			}
+		}
+		
+		endtime = System.currentTimeMillis();
+		double totaltime1 = (endtime - startTime);
+		System.out.println("Total Time=    " + totaltime1 +" milliseconds");
+		System.out.println("\n");
+		
+	}
+}
+
+
+//LocalClientThread.java
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+
+public class LocalClientThread extends Thread {
+	String fileName;
+	ConcurrentLinkedQueue<String> queue;
+	int count;
+	//initialize the required varibale for threading
+	public LocalClientThread(String fileName, ConcurrentLinkedQueue<String> queue,int inputCount) {
+		super();
+		this.fileName = fileName;
+		this.queue=queue;
+		this.count=inputCount;
+	}
+
+//reading the file contents and adding the task with assigned new task id in queue.
+@Override
+public void run() {
+	File file = new File(fileName);
+	BufferedReader br = null;
+	String message;
+	int taskid =0;
+	String temp;
+	
+	//reading file 
+	try {
+		br = new BufferedReader(new FileReader(file));
+		while ((message = br.readLine()) != null) {
+			temp = Integer.toString(taskid) + ":" +  message;
+			queue.add(temp);
+			taskid = taskid + 1;
+			
+		}
+		count=taskid;
+		//display();
+	}
+
+	catch (IOException e) {
+		e.printStackTrace();
+	}
+	
+}
+//display queue for validation purpose
+public void display()
+{
+	while(!queue.isEmpty())
+	{
+		System.out.println(" "+ queue.poll());
+	}
+}
+}
+
+//LocalWorker.java
+
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+
+//Local work for executing task mentione din queue
+
+public class LocalWorker extends Thread{
+	ConcurrentLinkedQueue<String> queue;
+	ConcurrentLinkedQueue<String> destinationqueue;
+
+	public LocalWorker(ConcurrentLinkedQueue<String> queue,
+			ConcurrentLinkedQueue<String> destinationqueue) {
+		super();
+		this.queue = queue;
+		this.destinationqueue = destinationqueue;
+	}
+
+	// Executing the task and calculting the time taken byy this thread to execute the tasks
+	
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		//super.run();
+		/*long startTime,endtime;
+		startTime = 0;
+		endtime = 0;*/
+		String temp;
+		String regex=":";
+		String data[],time[];
+				
+		//startTime = System.currentTimeMillis();
+		try {
+			while (!queue.isEmpty()) {
+				temp = queue.poll();
+				data = temp.split(regex);
+				time = data[1].split(" ");
+				destinationqueue.add(data[0]);
+				sleep(Integer.parseInt(time[1]));
+			}
+		}
+
+		catch (NumberFormatException e) 
+		{
+			e.printStackTrace();
+		} 
+		catch (InterruptedException e) 
+		{
+			e.printStackTrace();
+		}
+/*		endtime = System.currentTimeMillis();
+		double totaltime1 = (endtime - startTime);
+		System.out.println("\nTotal Time=    " + totaltime1 +" milliseconds");*/
+		//double totaltime=totaltime1/1000;
+		//System.out.println("Total Time=    " + totaltime +" seconds");
+	}
+	
+}
+
+
+// DynamoDBServiceUtil.java
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDB;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBIndexRangeKey;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
+import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
+import com.amazonaws.services.dynamodbv2.model.Condition;
+import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
+import com.amazonaws.services.dynamodbv2.model.DescribeTableRequest;
+import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
+import com.amazonaws.services.dynamodbv2.model.KeyType;
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
+import com.amazonaws.services.dynamodbv2.model.PutItemResult;
+import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
+import com.amazonaws.services.dynamodbv2.model.ScanRequest;
+import com.amazonaws.services.dynamodbv2.model.ScanResult;
+import com.amazonaws.services.dynamodbv2.model.TableDescription;
+import com.amazonaws.services.dynamodbv2.model.TableStatus;
+import com.amazonaws.services.dynamodbv2.util.Tables;
+
+public class DynamoDBServiceUtil {
+
+	private BasicAWSCredentials credentials;
+    private String simpleQueue = null;
+    private String resultQueue = null;
+	private String accessKey=null;
+	private String secretKey=null;
+	private String tableName = null;
+	static AmazonDynamoDBClient client;
+	private DynamoDBMapper mapper;
+	private DynamoDB db;
+	private AmazonDynamoDB amazonDynamoDB;
+    
+	// Constructor to initialize the required properties
+	
+	public DynamoDBServiceUtil() {
+		
+		Properties prop = new Properties();
+		try 
+    	{
+    		File file =  new File("AwsCredentials.properties");
+			prop.load(new FileInputStream(file));
+			this.accessKey = prop.getProperty("accessKey");
+	    	this.secretKey = prop.getProperty("secretKey");
+	    	this.simpleQueue = prop.getProperty("queuename");
+	    	this.resultQueue = prop.getProperty("resultsqs");
+	    	
+	    	credentials = new BasicAWSCredentials(accessKey, secretKey);
+	    	client = new AmazonDynamoDBClient(credentials);
+	    	Region USEastNV = Region.getRegion(Regions.US_EAST_1);
+	    	client.setRegion(USEastNV); 	
+	    	
+	    	amazonDynamoDB = new AmazonDynamoDBClient(credentials);
+	    	mapper = new DynamoDBMapper(amazonDynamoDB);
+    	} 
+    	catch (FileNotFoundException e) 
+    	{
+			e.printStackTrace();
+		} 
+    	catch (IOException e) 
+    	{
+			e.printStackTrace();
+		}
+	}
+	
+	// Creating a DynamoDB table for storing taskID and their status, so that we can verify the atomic execution of the task
+	// redundant task will simply get discarded.
+	
+	public void createTable(String tableName) 
+	{
+		try
+		{
+			if (Tables.doesTableExist(client, tableName)) 
+			{
+                System.out.println("Table " + tableName + " is already ACTIVE");
+            } 
+			else 
+			{
+				this.tableName = tableName;
+				CreateTableRequest createTableRequest = new CreateTableRequest().withTableName(tableName);
+				
+				KeySchemaElement keySchema = new KeySchemaElement().withAttributeName("id").withKeyType(KeyType.HASH);
+				createTableRequest.withKeySchema(keySchema);
+				
+				AttributeDefinition attributeDefinition = new AttributeDefinition().withAttributeName("id").withAttributeType(ScalarAttributeType.S);
+				createTableRequest.withAttributeDefinitions(attributeDefinition);
+				
+				ProvisionedThroughput provisionedThroughput = new ProvisionedThroughput().withReadCapacityUnits(15L).withWriteCapacityUnits(15L);
+				createTableRequest.withProvisionedThroughput(provisionedThroughput);
+				
+				TableDescription createdTableDescription = client.createTable(createTableRequest).getTableDescription();
+				
+				try 
+				{
+					Tables.awaitTableToBecomeActive(client, tableName);
+				} 
+				catch (InterruptedException e) 
+				{
+					e.printStackTrace();
+				}
+				System.out.println("Table Created SUCCESSFULLY !!!");
+			}
+		}	
+		catch (AmazonServiceException e) 
+		{
+			e.printStackTrace();
+		}
+		catch (AmazonClientException e) 
+		{
+			e.printStackTrace();
+		}
+		
+		// Describe new table
+        DescribeTableRequest describeTableRequest = new DescribeTableRequest().withTableName(tableName);
+        TableDescription tableDescription = client.describeTable(describeTableRequest).getTable();
+	}
+	
+	//Inserting record in DynamoDB table
+	
+	public void insert(String id,int status)
+	{
+		 Map<String, AttributeValue> item = newItem(id, status);
+         PutItemRequest putItemRequest = new PutItemRequest(tableName, item);
+         PutItemResult putItemResult = client.putItem(putItemRequest);
+	}
+	
+	//updating record in DynamoDB table
+	public void update(String id,String status)
+	{
+		CloudKonDB record = new CloudKonDB();
+		record.setId(id);
+		mapper.save(record);
+	}
+	
+	//Deleting record in DynamoDB table
+	public void delete(String id,String status)
+	{
+		CloudKonDB record = new CloudKonDB();
+		record.setId(id);
+		mapper.delete(record);
+	}
+	
+	//Scanning through record in DynamoDB table, and return false if no record for specified filter (Or Condition)
+	public boolean scan(String tableName, String msgID)
+	{
+		HashMap<String, Condition> scanFilter = new HashMap<String, Condition>();
+        Condition condition = new Condition()
+            .withComparisonOperator(ComparisonOperator.EQ.toString())
+            .withAttributeValueList(new AttributeValue().withS(msgID));
+        scanFilter.put("id", condition);
+        ScanRequest scanRequest = new ScanRequest(tableName).withScanFilter(scanFilter);
+        ScanResult scanResult = client.scan(scanRequest);
+        if(scanResult.getCount()==0)
+        {
+        	return false;
+        }
+        else
+        {
+        	return true;
+        }
+	}
+	
+	//Table ColumnMapper
+	@DynamoDBTable(tableName="CloudKonDB")
+ 	public class CloudKonDB {
+		private String Id;
+
+		@DynamoDBHashKey(attributeName = "Id")
+		public String getID(){
+			return Id;
+		}
+		public void setId(String Id){
+			this.Id = Id;
+		}
+	}
+	
+	//Setting Column attribute type 
+	private static Map<String, AttributeValue> newItem(String id, int status) {
+		Map<String, AttributeValue> item = new HashMap<String, AttributeValue>();
+        item.put("id", new AttributeValue(id));
+        item.put("status", new AttributeValue().withN(Integer.toString(status)));
+        return item;
+    }
+}
+
+
+//SQSClient.java
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Scanner;
+
+public class SQSClient {
+	public static void main(String[] args) {
+
+		//System.out.println("Enter Command in the format <client -s <SOURCEQUEUE> -w <WORKLOAD_FILE>>");
+		//Scanner scanner = new Scanner(System.in);
+		String commandLineArgument[] = null;
+		String fileName = null, queueName = null;
+		File file = null;
+		int i = 0;
+		boolean taskExecuting =true;
+		//commandLineArgument = scanner.nextLine().split(" ");
+
+		while (i < args.length) {
+			if (args[i].equals("-s")) {
+				i = i + 1;
+				queueName = args[i];
+			}
+			if (args[i].equals("-w")) {
+				i = i + 1;
+				fileName = args[i];
+			}
+			i++;
+		}
+
+		//Check whether user has entered correct input for 
+		if (!(fileName.isEmpty() && queueName.isEmpty())) {
+
+			file = new File(fileName);
+			BufferedReader br = null;
+			int count = 0, outputCount =0;
+			String message,temp;
+
+			// creating source SQS for storing input data
+			SQSQueueServiceUtil sourceQueue = new SQSQueueServiceUtil();
+			String queueUrl = sourceQueue.getQueueUrl(queueName);
+			
+			//Creating Destination SQS for storing output data
+			SQSQueueServiceUtil resultQueue = new SQSQueueServiceUtil();
+			String resultQueueName = resultQueue.getResultQueueName();
+			String resultQueueUrl = resultQueue.getQueueUrl(resultQueueName);
+
+			long startTime,endtime;
+			startTime = 0;
+			endtime = 0;
+			startTime = System.currentTimeMillis();
+			try {
+				br = new BufferedReader(new FileReader(file));
+				while ((message = br.readLine()) != null) {
+					//System.out.println(message);
+					temp = Integer.toString(count);
+					temp = "task"+temp;
+					message = temp + ":"+ message;
+					sourceQueue.sendMessagetoQueue(queueUrl, message);
+					count = count + 1;
+				}
+			}
+
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			System.out.println("filling done Successfully !!");
+			System.out.println("Waiting for remote worker to complete the task !!");
+			
+			while(taskExecuting)
+			{
+				//Checking if resultant SQS queue is Empty or not
+				if(!resultQueue.IsEmpty(resultQueueUrl))
+				{
+					//poll from destination SQS
+					//Here i can improve by deleting bunch of requests and incrementing the count (outputCount) by the size of message
+					// sqs get() returning.
+					resultQueue.pollFromQueue(resultQueueUrl);
+					outputCount ++;
+				}
+				
+				//Comparing the numbe rof task completed, if all task are completed will delete dource and destination SQS queue 
+				if(count == outputCount)
+				{
+					//System.out.println("Number of task completed are: "+outputCount);
+					resultQueue.deleteSQS(resultQueueUrl);
+					sourceQueue.deleteSQS(queueUrl);
+					taskExecuting = false;
+					break;
+				}
+			}
+			endtime = System.currentTimeMillis();
+			double totaltime1 = (endtime - startTime);
+			System.out.println("\nTotal Time=    " + totaltime1 +" milliseconds");
+/*			double totaltime=totaltime1/1000;
+			System.out.println("Total Time=    " + totaltime +" seconds");*/
+			
+			
+		} else {
+			System.out
+					.println(" input file is missing please check the name of file !!!!");
+		}
+
+	}
+
+}
+
+//SQSQueueServiceUtil.java
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.List;
+import java.util.Properties;
+
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.AmazonSQSClient;
+import com.amazonaws.services.sqs.model.CreateQueueRequest;
+import com.amazonaws.services.sqs.model.DeleteMessageRequest;
+import com.amazonaws.services.sqs.model.GetQueueUrlRequest;
+import com.amazonaws.services.sqs.model.ListQueuesResult;
+import com.amazonaws.services.sqs.model.Message;
+import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
+import com.amazonaws.services.sqs.model.ReceiveMessageResult;
+import com.amazonaws.services.sqs.model.SendMessageRequest;
+import com.amazonaws.services.sqs.model.SendMessageResult;
+
+
+public class SQSQueueServiceUtil {
+
+	private BasicAWSCredentials credentials;
+    private AmazonSQS sqs;
+    private String simpleQueue = null;
+    private String resultQueue = null;
+	private String accessKey=null;
+	private String secretKey=null;
+	private String endpoint = null;
+    
+	// Constructor to initialize the required properties
+	
+    public SQSQueueServiceUtil() {
+    	Properties prop = new Properties();
+    	try 
+    	{
+    		File file =  new File("AwsCredentials.properties");
+			prop.load(new FileInputStream(file));
+			this.accessKey = prop.getProperty("accessKey");
+	    	this.secretKey = prop.getProperty("secretKey");
+	    	this.endpoint = prop.getProperty("endpoint");
+	    	this.simpleQueue = prop.getProperty("queuename");
+	    	this.resultQueue = prop.getProperty("resultsqs");
+	    	
+	    	credentials = new BasicAWSCredentials(accessKey, secretKey);
+	    	sqs = new AmazonSQSClient(credentials);
+	    	sqs.setEndpoint(endpoint);
+    	} 
+    	catch (FileNotFoundException e) 
+    	{
+			e.printStackTrace();
+		} 
+    	catch (IOException e) 
+    	{
+			e.printStackTrace();
+		}
+	}
+    
+    // Return the AmazonSQS
+    public AmazonSQS getSQSClient()
+    {
+    	return this.sqs;
+    }
+    
+    //	Return the Source QueueName
+    public String getQueueName()
+    {
+    	return this.simpleQueue;
+    }
+    
+    // Return the Result QueueName
+    public String getResultQueueName()
+    {
+    	return this.resultQueue;
+    }
+    
+    // Create a new SQS queuee and Return newly created Queue URL
+    public String createQueue(String queueName)
+    {
+    	CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
+    	String queueUrl = this.sqs.createQueue(createQueueRequest).getQueueUrl();
+    	return queueUrl;
+    }
+        
+    //Return newly Queue URL from Name given as a parameter
+    public String getQueueUrl(String queueName)
+    {
+    	GetQueueUrlRequest getQueueUrlRequest = new GetQueueUrlRequest(queueName);
+    	return this.sqs.getQueueUrl(getQueueUrlRequest).getQueueUrl();
+    }
+    
+    //Return ListQueuesResult
+    public ListQueuesResult listQueue()
+    {
+    	return this.sqs.listQueues();
+    }
+	
+    //Adding the record to queue; parameters are queue URl and message to add in queue 
+    public void sendMessagetoQueue(String queueUrl, String message)
+    {
+    	SendMessageRequest sendMessageRequest = new SendMessageRequest(queueUrl,message);
+    	SendMessageResult messageResult = this.sqs.sendMessage(sendMessageRequest);
+    }
+    
+    //return the list of message from queue; parameter provided are queue URl
+    public List<Message> getMessageFromQueue(String queueUrl)
+    {
+    	ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
+    	receiveMessageRequest.setMaxNumberOfMessages(1);
+    	receiveMessageRequest.setVisibilityTimeout(1);
+    	receiveMessageRequest.setWaitTimeSeconds(1);
+    	List<Message> messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+    	return messages;
+    }
+    
+    //poll the message or record from queue; parameter provided is URL for queue
+    public void  pollFromQueue(String queueUrl)
+    {
+    	List<Message> messages=null;
+    	messages = this.getMessageFromQueue(queueUrl);
+		for (Message message : messages)
+		{
+			this.deleteMessageFromQueue(queueUrl, message);	
+			break;
+		}
+    }
+    
+    // Delete message from queue; parameters provided are queue URL and message to delete 
+    public void deleteMessageFromQueue(String queueUrl, Message message)
+    {
+    	String messageReceiptHandle = message.getReceiptHandle();
+    	DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest(queueUrl,messageReceiptHandle);
+    	sqs.deleteMessage(deleteMessageRequest);
+    }
+
+    // Method to check whether queue is empty or not; return true and false accordingly 
+	public boolean IsEmpty(String resultQueueUrl) {
+		ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(resultQueueUrl);
+    	receiveMessageRequest.setMaxNumberOfMessages(1);
+    	receiveMessageRequest.setVisibilityTimeout(0);
+    	receiveMessageRequest.setWaitTimeSeconds(1);
+    	List<Message> messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+    	if(messages.isEmpty())
+    	{
+    		return true;
+    	}
+		return false;
+	}
+
+	// delete SQS; parameter is queue URL to delete
+	public void deleteSQS(String queueUrl) {
+		this.sqs.deleteQueue(queueUrl);
+	}
+}
+
+//SQSRemoteWorker.java
+import java.util.List;
+import java.util.Scanner;
+
+import com.amazonaws.services.sqs.model.Message;
+
+public class SQSRemoteWorker {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+
+		/*System.out
+				.println("Remote Worker is running enter <Client -s <SourceQueueName> -t <Number Of threads>");
+		Scanner scanner = new Scanner(System.in);*/
+		String inputArgs[] = null;
+		String threads = null, queueName = null;
+		int i = 0, j = 0;
+		boolean working = true;
+		List<Message> messages = null;
+		//inputArgs = scanner.nextLine().split(" ");
+
+		while (i < args.length) {
+			if (args[i].equals("-s")) {
+				i = i + 1;
+				queueName = args[i];
+			}
+
+			if (args[i].equals("-t")) {
+				i = i + 1;
+				threads = args[i];
+			}
+			i++;
+		}
+
+		// check whether we have SQS queue created if not create the queue
+		SQSQueueServiceUtil sourceQueue = new SQSQueueServiceUtil();
+		if (!sourceQueue.isExist(queueName)) {
+			String queueUrl = sourceQueue.createQueue(queueName);
+		}
+
+		// Creating Result SQS
+		SQSQueueServiceUtil resultQueue = new SQSQueueServiceUtil();
+		String resultQueueName = resultQueue.getResultQueueName();
+		if (!resultQueue.isExist(resultQueueName)) {
+			String resultQueueUrl = resultQueue.createQueue(resultQueueName);
+		}
+
+		// Creating DynamoDB table
+		String tableName = "CloudKonDB";
+		DynamoDBServiceUtil dbServiceUtil = new DynamoDBServiceUtil();
+		dbServiceUtil.createTable(tableName);
+
+		int numberofthreads = Integer.parseInt(threads);
+
+		for (j = 0; j < numberofthreads; j++) {
+			SQSRemoteWorkerThread remoteWorkerThread = new SQSRemoteWorkerThread(
+					queueName, resultQueueName, tableName);
+			remoteWorkerThread.start();
+		}
+		//scanner.close();
+	}
+}
+
+//SQSRemoteWorkerThread.java
+import java.util.List;
+
+import com.amazonaws.services.sqs.model.Message;
+
+public class SQSRemoteWorkerThread extends Thread {
+	
+	String queueName;
+	String resultQueueName;
+	String tableName;
+	
+	public SQSRemoteWorkerThread(String queueName, String resultQueueName, String tableName) 
+	{
+		this.queueName=queueName;
+		this.resultQueueName=resultQueueName;
+		this.tableName=tableName;
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		super.run();
+		String data[];
+		String temp;
+		String msg;
+		String msgs[];
+		int time;
+/*		long startTime,endtime;
+		startTime = 0;
+		endtime = 0;*/
+		
+		SQSQueueServiceUtil sourceQueue = new SQSQueueServiceUtil();
+		String queueUrl = sourceQueue.getQueueUrl(queueName);
+		
+		//Destination SQS URL
+		SQSQueueServiceUtil resultQueue = new SQSQueueServiceUtil();
+		String resultQueueUrl = resultQueue.getQueueUrl(resultQueueName);
+		
+		//Creating DynamoDB table
+		DynamoDBServiceUtil dbServiceUtil = new DynamoDBServiceUtil();
+		
+		boolean flag = true; 
+		/*startTime = System.currentTimeMillis();*/
+		try
+		{
+		
+		while(flag)
+		{
+			msg = sourceQueue.pollFromQueue(queueUrl);
+			if (!(msg == null)) {
+				msgs = msg.split(":");
+				if (!dbServiceUtil.scan(tableName, msgs[0])) {
+					//System.out.println("I am here !!");
+					dbServiceUtil.insert(msgs[0], "0", tableName);
+					temp = msgs[1].toString();
+					data = temp.split(" ");
+					time = Integer.parseInt(data[1]);
+					try {
+						sleep(time);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+
+					// adding to result SQS queue
+					resultQueue.sendMessagetoQueue(resultQueueUrl, msgs[0]);
+				}
+			}
+		}
+		
+		}
+		
+		catch(Exception ex)
+		{
+		}
+		/*endtime = System.currentTimeMillis();
+		double totaltime1 = (endtime - startTime);
+		System.out.println("\nTotal Time=    " + totaltime1 +" milliseconds");
+		double totaltime=totaltime1/1000;
+		System.out.println("Total Time=    " + totaltime +" seconds");*/
+	}
+
+}
+
+//TaskCreation utility
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Properties;
+
+public class TaskCreation {
+
+	public static void main(String[] args) {
+		int tasks = Integer.parseInt(args[0]);
+		int time = Integer.parseInt(args[1]);
+		int i=1;
+		FileWriter writer = null;
+		File file = null;
+		try {
+			file = new File("/home/ubuntu/CloudKonClient/workload");
+			writer = new FileWriter(file);
+
+			while(i<=tasks)
+			{				
+				writer.write("sleep "+ time + "\n");
+				i++;
+			}
+			
+		} 
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		finally 
+		{
+			try 
+			{
+				writer.close();
+			} 
+			catch (IOException e) 
+			{
+				e.printStackTrace();
+			}
+		}
+	}
+}
+
+

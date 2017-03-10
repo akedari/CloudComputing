@@ -1,0 +1,23 @@
+<project name="LocalWorkerCloud" default="main" basedir=".">
+	<target name="init" >
+		<tstamp />
+		<mkdir dir="bin" />
+	</target>
+	
+	<target name="compileLocalWorkerCloud" depends="init">
+		<mkdir dir="build/classes" />
+		<javac srcdir="src" destdir="build/classes">
+		</javac>
+	</target>
+
+	<target name="RunLocaljar" depends="compileLocalWorkerCloud">
+		<mkdir dir="build/jar" />
+		<jar destfile="build/jar/Local.jar" basedir="build/classes">
+			<manifest>
+				<attribute name="Main-Class" value="" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="main" depends="RunLocaljar" />
+</project>

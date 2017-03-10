@@ -1,0 +1,23 @@
+<project name="Utility" default="main" basedir=".">
+	<target name="init" >
+		<tstamp />
+		<mkdir dir="bin" />
+	</target>
+	
+	<target name="compileUtility" depends="init">
+		<mkdir dir="build/classes" />
+		<javac srcdir="src" destdir="build/classes">
+		</javac>
+	</target>
+
+	<target name="RunUtilityjar" depends="compileUtility">
+		<mkdir dir="build/jar" />
+		<jar destfile="build/jar/Utility.jar" basedir="build/classes">
+			<manifest>
+				<attribute name="Main-Class" value="" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="main" depends="RunUtilityjar" />
+</project>
